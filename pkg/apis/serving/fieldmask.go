@@ -174,6 +174,7 @@ func PodSpecMask(ctx context.Context, in *corev1.PodSpec) *corev1.PodSpec {
 	out.Volumes = in.Volumes
 	out.ImagePullSecrets = in.ImagePullSecrets
 	out.EnableServiceLinks = in.EnableServiceLinks
+	out.SchedulerName = in.SchedulerName
 
 	// Feature fields
 	if cfg.Features.PodSpecAffinity != config.Disabled {
@@ -210,7 +211,6 @@ func PodSpecMask(ctx context.Context, in *corev1.PodSpec) *corev1.PodSpec {
 	out.ShareProcessNamespace = nil
 	out.Hostname = ""
 	out.Subdomain = ""
-	out.SchedulerName = ""
 	out.PriorityClassName = ""
 	out.Priority = nil
 	out.DNSConfig = nil
