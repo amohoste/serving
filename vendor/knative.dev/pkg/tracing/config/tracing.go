@@ -1,12 +1,9 @@
 /*
 Copyright 2019 The Knative Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +35,7 @@ const (
 	debugKey                = "debug"
 	sampleRateKey           = "sample-rate"
 	stackdriverProjectIDKey = "stackdriver-project-id"
+	kubeResourceTracingKey  = "kube-resource-tracing"
 )
 
 // BackendType specifies the backend to use for tracing
@@ -60,11 +58,16 @@ type Config struct {
 
 	Debug      bool
 	SampleRate float64
+	KubeResourceTracing bool
 }
 
 // Equals returns true if two Configs are identical
 func (cfg *Config) Equals(other *Config) bool {
 	return reflect.DeepEqual(other, cfg)
+}
+
+func (cfg *Config) DoKubeResourceTracing() bool {
+	return cfg.Backend != None && cfg.KubeResourceTracing
 }
 
 // NoopConfig returns a new noop config
@@ -73,6 +76,7 @@ func NoopConfig() *Config {
 		Backend:    None,
 		Debug:      false,
 		SampleRate: 0.1,
+		KubeResourceTracing: false,
 	}
 }
 
@@ -105,6 +109,14 @@ func NewTracingConfigFromMap(cfgMap map[string]string) (*Config, error) {
 		cm.AsFloat64(sampleRateKey, &tc.SampleRate),
 	); err != nil {
 		return nil, err
+	}
+
+	if rtRaw, ok := cfgMap[kubeResourceTracingKey]; ok {
+		rt, err := strconv.ParseBool(rtRaw)
+		if err != nil {
+			return nil, fmt.Errorf("Failed parsing %q: %v", kubeResourceTracingKey, err)
+		}
+		tc.KubeResourceTracing = rt
 	}
 
 	if tc.Backend == Zipkin && tc.ZipkinEndpoint == "" {
