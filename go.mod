@@ -27,6 +27,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
+	github.com/prometheus/common v0.25.0
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/tsenart/vegeta/v12 v12.8.4
 	go.opencensus.io v0.23.0

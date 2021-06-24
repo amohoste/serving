@@ -174,8 +174,10 @@ func main() {
 	go func() {
 		for now := range reportTicker.C {
 			stat := stats.Report(now)
+			customMetrics := queue.CustomMetrics.Get()
+
 			promStatReporter.Report(stat)
-			protoStatReporter.Report(stat)
+			protoStatReporter.Report(stat, customMetrics)
 		}
 	}()
 

@@ -34,10 +34,10 @@ func TestProtobufStatsReporterReport(t *testing.T) {
 			reporter := NewProtobufStatsReporter(pod, test.reportingPeriod)
 			// Make the value slightly more interesting, rather than microseconds.
 			reporter.startTime = reporter.startTime.Add(-5 * time.Second)
-			reporter.Report(test.report)
+			reporter.Report(test.report, CustomMetricReport{totalExecutions: 0, totalExecutionTime: 0})
 			got := scrapeProtobufStat(t, reporter)
 			test.want.PodName = pod
-			if !cmp.Equal(test.want, got, ignoreStatFields) {
+			if !cmp.Equal(test.want, got, ignoreStatAndCustomFields) {
 				t.Errorf("Scraped stat mismatch; diff(-want,+got):\n%s", cmp.Diff(test.want, got))
 			}
 			if gotUptime := got.ProcessUptime; gotUptime < 5.0 || gotUptime > 6.0 {

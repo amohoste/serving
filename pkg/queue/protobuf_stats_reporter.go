@@ -61,7 +61,7 @@ func NewProtobufStatsReporter(pod string, reportingPeriod time.Duration) *Protob
 }
 
 // Report captures request metrics.
-func (r *ProtobufStatsReporter) Report(stats network.RequestStatsReport) {
+func (r *ProtobufStatsReporter) Report(stats network.RequestStatsReport, customMetrics CustomMetricReport) {
 	r.stat.Store(metrics.Stat{
 		PodName:       r.podName,
 		ProcessUptime: time.Since(r.startTime).Seconds(),
@@ -71,6 +71,8 @@ func (r *ProtobufStatsReporter) Report(stats network.RequestStatsReport) {
 		ProxiedRequestCount:              stats.ProxiedRequestCount / r.reportingPeriodSeconds,
 		AverageConcurrentRequests:        stats.AverageConcurrency,
 		AverageProxiedConcurrentRequests: stats.AverageProxiedConcurrency,
+		TotalContainerExecutionTime:      customMetrics.totalExecutionTime,
+		ContainerExecutionCount: 		  customMetrics.totalExecutions,
 	})
 }
 

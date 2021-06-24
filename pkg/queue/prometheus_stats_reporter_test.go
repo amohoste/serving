@@ -39,6 +39,7 @@ const (
 )
 
 var ignoreStatFields = cmpopts.IgnoreFields(metrics.Stat{}, "ProcessUptime")
+var ignoreStatAndCustomFields = cmpopts.IgnoreFields(metrics.Stat{}, "ProcessUptime", "TotalContainerExecutionTime", "ContainerExecutionCount")
 
 var testCases = []struct {
 	name            string

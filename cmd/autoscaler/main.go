@@ -70,14 +70,18 @@ const (
 )
 
 func main() {
-	// Set up signals so we handle the first shutdown signal gracefully.
+	// Set up signals so we handle the first shutdown signal gracefully. Channel / context to send shutdown signal
+	// carries deadlines, cancellation signals, and other request-scoped values across API boundaries and between processes
 	ctx := signals.NewContext()
 
 	// Report stats on Go memory usage every 30 seconds.
 	metrics.MemStatsOrDie(ctx)
 
+	// Parse config
 	cfg := injection.ParseAndGetRESTConfigOrDie()
 
+	// Informer & controllers: see kubernetes documentation. Used to sort pods by age & by scraping code
+	// and accurately report pod states (READY, ...) in autoscaler
 	log.Printf("Registering %d clients", len(injection.Default.GetClients()))
 	log.Printf("Registering %d informer factories", len(injection.Default.GetInformerFactories()))
 	log.Printf("Registering %d informers", len(injection.Default.GetInformers()))

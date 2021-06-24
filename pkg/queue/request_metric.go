@@ -201,6 +201,8 @@ func (h *appRequestMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		ctx := metrics.AugmentWithResponse(h.statsCtx, rr.ResponseCode)
 		pkgmetrics.RecordBatch(ctx, appRequestCountM.M(1),
 			appResponseTimeInMsecM.M(float64(latency.Milliseconds())))
+		// Log to custom metric store
+		CustomMetrics.LogExecution(float64(latency.Milliseconds()))
 	}()
 	h.next.ServeHTTP(rr, r)
 }
