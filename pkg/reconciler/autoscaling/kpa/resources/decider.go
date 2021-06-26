@@ -66,6 +66,11 @@ func MakeDecider(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig
 		scaleDownDelay = sdd
 	}
 
+	scaleUpDelay := config.ScaleUpDelay
+	if sdd, ok := pa.ScaleUpDelay(); ok {
+		scaleUpDelay = sdd
+	}
+
 	return &scaling.Decider{
 		ObjectMeta: *pa.ObjectMeta.DeepCopy(),
 		Spec: scaling.DeciderSpec{
@@ -79,6 +84,7 @@ func MakeDecider(pa *autoscalingv1alpha1.PodAutoscaler, config *autoscalerconfig
 			PanicThreshold:      panicThreshold,
 			StableWindow:        resources.StableWindow(pa, config),
 			ScaleDownDelay:      scaleDownDelay,
+			ScaleUpDelay:		 scaleUpDelay,
 			InitialScale:        GetInitialScale(config, pa),
 			Reachable:           pa.Spec.Reachability != autoscalingv1alpha1.ReachabilityUnreachable,
 		},

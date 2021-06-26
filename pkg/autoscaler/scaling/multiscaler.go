@@ -70,6 +70,9 @@ type DeciderSpec struct {
 	// ScaleDownDelay is the time that must pass at reduced concurrency before a
 	// scale-down decision is applied.
 	ScaleDownDelay time.Duration
+	// ScaleUpDelay is the time that must pass at increased concurrency before a
+	// scale-up decision is applied. Must be at least 2*tickinterval if used!
+	ScaleUpDelay time.Duration
 	// InitialScale is the calculated initial scale of the revision, taking both
 	// revision initial scale and cluster initial scale into account. Revision initial
 	// scale overrides cluster initial scale.

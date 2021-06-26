@@ -57,6 +57,7 @@ func defaultConfig() *autoscalerconfig.Config {
 		ScaleToZeroGracePeriod:        30 * time.Second,
 		ScaleToZeroPodRetentionPeriod: 0 * time.Second,
 		ScaleDownDelay:                0 * time.Second,
+		ScaleUpDelay:				   0 * time.Second,
 		PodAutoscalerClass:            autoscaling.KPA,
 		AllowZeroInitialScale:         false,
 		InitialScale:                  1,
@@ -91,6 +92,7 @@ func NewConfigFromMap(data map[string]string) (*autoscalerconfig.Config, error) 
 
 		cm.AsDuration("stable-window", &lc.StableWindow),
 		cm.AsDuration("scale-down-delay", &lc.ScaleDownDelay),
+		cm.AsDuration("scale-up-delay", &lc.ScaleUpDelay),
 		cm.AsDuration("scale-to-zero-grace-period", &lc.ScaleToZeroGracePeriod),
 		cm.AsDuration("scale-to-zero-pod-retention-period", &lc.ScaleToZeroPodRetentionPeriod),
 	); err != nil {
@@ -119,6 +121,14 @@ func validate(lc *autoscalerconfig.Config) (*autoscalerconfig.Config, error) {
 
 	if lc.ScaleDownDelay.Round(time.Second) != lc.ScaleDownDelay {
 		return nil, fmt.Errorf("scale-down-delay = %v, must be specified with at most second precision", lc.ScaleDownDelay)
+	}
+
+	if lc.ScaleUpDelay < 0 {
+		return nil, fmt.Errorf("scale-up-delay cannot be negative, was: %v", lc.ScaleUpDelay)
+	}
+
+	if lc.ScaleUpDelay.Round(time.Second) != lc.ScaleUpDelay {
+		return nil, fmt.Errorf("scale-up-delay = %v, must be specified with at most second precision", lc.ScaleUpDelay)
 	}
 
 	if lc.ScaleToZeroPodRetentionPeriod < 0 {

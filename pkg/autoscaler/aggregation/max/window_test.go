@@ -105,7 +105,7 @@ func TestWindowMax(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			max := newWindow(5)
+			max := newWindow(5, greater)
 
 			indexFunc := func(i int) int { return i }
 			if tt.indexFunc != nil {

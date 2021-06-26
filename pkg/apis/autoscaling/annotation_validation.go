@@ -57,6 +57,7 @@ func ValidateAnnotations(ctx context.Context, config *autoscalerconfig.Config, a
 		Also(validateWindow(anns)).
 		Also(validateLastPodRetention(anns)).
 		Also(validateScaleDownDelay(anns)).
+		Also(validateScaleUpDelay(anns)).
 		Also(validateMetric(anns)).
 		Also(validateAlgorithm(anns)).
 		Also(validateInitialScale(config, anns))
@@ -138,6 +139,22 @@ func validateScaleDownDelay(annotations map[string]string) *apis.FieldError {
 			errs = apis.ErrOutOfBoundsValue(w, 0*time.Second, WindowMax, ScaleDownDelayAnnotationKey)
 		} else if d.Round(time.Second) != d {
 			errs = apis.ErrGeneric("must be specified with at most second precision", ScaleDownDelayAnnotationKey)
+		}
+	}
+	return errs
+}
+
+func validateScaleUpDelay(annotations map[string]string) *apis.FieldError {
+	var errs *apis.FieldError
+	if w, ok := annotations[ScaleUpDelayAnnotationKey]; ok {
+		if d, err := time.ParseDuration(w); err != nil {
+			errs = apis.ErrInvalidValue(w, ScaleUpDelayAnnotationKey)
+		} else if d < 0 || d > WindowMax {
+			// Since we disallow windows longer than WindowMax, so we should limit this
+			// as well.
+			errs = apis.ErrOutOfBoundsValue(w, 0*time.Second, WindowMax, ScaleUpDelayAnnotationKey)
+		} else if d.Round(time.Second) != d {
+			errs = apis.ErrGeneric("must be specified with at most second precision", ScaleUpDelayAnnotationKey)
 		}
 	}
 	return errs

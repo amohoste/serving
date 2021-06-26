@@ -57,6 +57,10 @@ type autoscaler struct {
 	// window has passed at the reduced concurrency.
 	delayWindow *max.TimeWindow
 
+	// scaleUpDelayWindow is used to defer scale-up decisions until a time
+	// window has passed at the increased concurrency.
+	scaleUpDelayWindow *max.TimeWindow
+
 	// specMux guards the current DeciderSpec.
 	specMux     sync.RWMutex
 	deciderSpec *DeciderSpec
@@ -75,8 +79,13 @@ func New(
 		delayer = max.NewTimeWindow(deciderSpec.ScaleDownDelay, tickInterval)
 	}
 
+	var scaleUpDelayer *max.TimeWindow
+	if deciderSpec.ScaleUpDelay > 0 {
+		scaleUpDelayer = max.NewMinTimeWindow(deciderSpec.ScaleUpDelay, tickInterval)
+	}
+
 	return newAutoscaler(reporterCtx, namespace, revision, metricClient,
-		podCounter, deciderSpec, delayer)
+		podCounter, deciderSpec, delayer, scaleUpDelayer)
 }
 
 func newAutoscaler(
@@ -85,7 +94,8 @@ func newAutoscaler(
 	metricClient metrics.MetricClient,
 	podCounter podCounter,
 	deciderSpec *DeciderSpec,
-	delayWindow *max.TimeWindow) *autoscaler {
+	delayWindow *max.TimeWindow,
+	scaleUpDelayWindow *max.TimeWindow) *autoscaler {
 
 	// We always start in the panic mode, if the deployment is scaled up over 1 pod.
 	// If the scale is 0 or 1, normal Autoscaler behavior is fine.
@@ -118,6 +128,7 @@ func newAutoscaler(
 		podCounter:  podCounter,
 
 		delayWindow: delayWindow,
+		scaleUpDelayWindow: scaleUpDelayWindow,
 
 		panicTime:    pt,
 		maxPanicPods: int32(curC),
@@ -243,10 +254,31 @@ func (a *autoscaler) Scale(logger *zap.SugaredLogger, now time.Time) ScaleResult
 	// not the same in the case where two Scale()s happen in the same time
 	// interval (because the largest will be picked rather than the most recent
 	// in that case).
+
+	// Delay scale up decisions
+	if a.scaleUpDelayWindow != nil {
+		a.scaleUpDelayWindow.Record(now, desiredPodCount)
+		scaleUpDelayedPodCount := a.delayWindow.Current()
+
+		if scaleUpDelayedPodCount < desiredPodCount {
+			// Delay scale up decisions
+			if debugEnabled {
+				desugared.Debug(
+					fmt.Sprintf("Delaying scale to %d, staying at %d",
+						desiredPodCount, scaleUpDelayedPodCount))
+			}
+			desiredPodCount = scaleUpDelayedPodCount
+		}
+	}
+
+	delayedPodCount := desiredPodCount
+
 	if a.delayWindow != nil {
 		a.delayWindow.Record(now, desiredPodCount)
-		delayedPodCount := a.delayWindow.Current()
-		if delayedPodCount != desiredPodCount {
+		delayedPodCount = a.delayWindow.Current()
+
+		if delayedPodCount > desiredPodCount {
+			// Delay scale down decisions
 			if debugEnabled {
 				desugared.Debug(
 					fmt.Sprintf("Delaying scale to %d, staying at %d",

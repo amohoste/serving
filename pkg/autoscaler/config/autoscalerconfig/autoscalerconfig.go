@@ -83,5 +83,8 @@ type Config struct {
 	// add an additional delay to the very last pod, if required.
 	ScaleDownDelay time.Duration
 
+	// Must be at least 2*tickinterval if used!
+	ScaleUpDelay time.Duration
+
 	PodAutoscalerClass string
 }
